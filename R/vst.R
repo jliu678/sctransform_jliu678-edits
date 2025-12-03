@@ -648,8 +648,17 @@ get_model_pars <- function(genes_step1, bin_size, umi, model_str, cells_step1,
                                data = data_step1, allow_inf_theta = exclude_poisson))
         }
        else if (method == "glmGamPoi_offset") {
+        if (is.null(theta_given)){
           return(fit_glmGamPoi_offset(umi = umi_bin_worker, model_str = model_str,
                                       data = data_step1, allow_inf_theta = exclude_poisson))
+        }else{
+          theta_given_bin_worker <- theta_given_bin[indices]
+          return(fit_glmGamPoi_offset_fixed_theta(
+            umi = umi_bin_worker, model_str = model_str,theta_given = theta_given_bin_worker,
+            data = data_step1, allow_inf_theta = exclude_poisson)
+            )
+        }
+
        }
         else if (method == "nb_offset") {
           return(fit_nb_offset(umi = umi_bin_worker, model_str = model_str, data = data_step1, allow_inf_theta = exclude_poisson))

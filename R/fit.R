@@ -105,7 +105,7 @@ fit_overdisp_mle <- function(umi, mu, intercept, slope){
 }
 
 # Use log_umi as offset using glmGamPoi
-fit_glmGamPoi_offset <- function(umi, model_str, data,  allow_inf_theta=FALSE) {
+fit_glmGamPoi_offset <- function(umi, model_str, data,  allow_inf_theta=FALSE, theta_given) {
   log10_umi <- data$log_umi
   stopifnot(!is.null(log10_umi))
   log_umi <- log(10^log10_umi)
@@ -175,6 +175,143 @@ fit_glmGamPoi_offset <- function(umi, model_str, data,  allow_inf_theta=FALSE) {
   colnames(x = model_pars)[match(x = 'Intercept', table = colnames(x = model_pars))] <- "(Intercept)"
   return(model_pars)
 }
+
+fit_glmGamPoi_offset_fixed_theta <- function(
+    umi,
+    model_str,
+    data,
+    theta_given = NULL,
+    allow_inf_theta = FALSE
+) {
+
+  # -------------------------------
+  # Prepare log_UMI offset
+  # -------------------------------
+  log10_umi <- data$log_umi
+  stopifnot(!is.null(log10_umi))
+  log_umi <- log(10^log10_umi)
+
+  # -------------------------------
+  # Detect batch interaction
+  # -------------------------------
+  includes.batch_var <- grepl("\\(log_umi\\) :", model_str)
+
+  new_formula <- gsub("y", "", model_str)
+  includes.log_umi <- grepl("~ log_umi", new_formula)
+
+  if (!includes.batch_var) {
+    new_formula <- gsub("\\+ log_umi", "", new_formula)
+    new_formula <- gsub("log_umi", "1", new_formula)
+  } else {
+    log_umi <- 0   # if interacting with batch, log_umi is absorbed
+  }
+
+  # -------------------------------
+  # Fit NB model
+  # Using fixed theta if given
+  # -------------------------------
+  if (!is.null(theta_given)) {
+    # glm_gp expects *overdispersion*, not theta
+    overdispersion_input <- 1 / theta_given
+  } else {
+    overdispersion_input <- TRUE   # instruct glm_gp to estimate it
+  }
+
+  fit <- glmGamPoi::glm_gp(
+    data = umi,
+    design = as.formula(new_formula),
+    col_data = data,
+    offset = log_umi,
+    size_factors = FALSE,
+    overdispersion = overdispersion_input
+  )
+
+  # -------------------------------
+  # Determine θ
+  # -------------------------------
+  if (!is.null(theta_given)) {
+    theta <- rep(theta_given, nrow(umi))
+  } else {
+    theta <- 1 / fit$overdispersions
+
+    if (!allow_inf_theta) {
+      theta <- pmin(theta, rowMeans(fit$Mu) / 1e-4)
+    }
+  }
+
+  # -------------------------------
+  # Build output parameter matrix
+  # -------------------------------
+  if ("Intercept" %in% colnames(fit$Beta)) {
+
+    if (includes.log_umi) {
+
+      model_pars <- cbind(theta,
+                          fit$Beta[, "Intercept"],
+                          rep(log(10), nrow(umi)))
+
+      dimnames(model_pars) <- list(
+        rownames(umi),
+        c("theta", "(Intercept)", "log_umi")
+      )
+
+      n_coeff <- ncol(fit$Beta)
+      if (n_coeff > 1) {
+        model_pars <- cbind(model_pars, fit$Beta[, 2:n_coeff])
+        colnames(model_pars)[4:ncol(model_pars)] <- colnames(fit$Beta)[2:n_coeff]
+      }
+
+    } else {
+
+      model_pars <- cbind(theta, fit$Beta)
+      dimnames(model_pars) <- list(
+        rownames(umi),
+        c("theta", colnames(fit$Beta))
+      )
+
+    }
+
+  } else {
+
+    if (!includes.batch_var) {
+
+      if (includes.log_umi) {
+
+        model_pars <- cbind(theta,
+                            rep(log(10), nrow(umi)),
+                            fit$Beta)
+        dimnames(model_pars) <- list(
+          rownames(umi),
+          c("theta", "log_umi", colnames(fit$Beta))
+        )
+
+      } else {
+
+        model_pars <- cbind(theta, fit$Beta)
+        dimnames(model_pars) <- list(
+          rownames(umi),
+          c("theta", colnames(fit$Beta))
+        )
+
+      }
+
+    } else {
+
+      model_pars <- cbind(theta, fit$Beta)
+      dimnames(model_pars) <- list(
+        rownames(umi),
+        c("theta", colnames(fit$Beta))
+      )
+
+    }
+  }
+
+  # rename "Intercept" to "(Intercept)"
+  colnames(model_pars)[match("Intercept", colnames(model_pars))] <- "(Intercept)"
+
+  return(model_pars)
+}
+
 
 fit_nb_offset <- function(umi, model_str, data, allow_inf_theta=FALSE) {
   # remove log_umi from model formula if it is with batch variables
