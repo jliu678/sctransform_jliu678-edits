@@ -105,7 +105,7 @@ fit_overdisp_mle <- function(umi, mu, intercept, slope){
 }
 
 # Use log_umi as offset using glmGamPoi
-fit_glmGamPoi_offset <- function(umi, model_str, data,  allow_inf_theta=FALSE, theta_given) {
+fit_glmGamPoi_offset <- function(umi, model_str, data,  allow_inf_theta=FALSE) {
   log10_umi <- data$log_umi
   stopifnot(!is.null(log10_umi))
   log_umi <- log(10^log10_umi)
@@ -230,7 +230,7 @@ fit_glmGamPoi_offset_fixed_theta <- function(
   # Determine θ
   # -------------------------------
   if (!is.null(theta_given)) {
-    theta <- rep(theta_given, nrow(umi))
+    theta <- theta_given
   } else {
     theta <- 1 / fit$overdispersions
 
