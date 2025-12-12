@@ -33,7 +33,8 @@ NULL
 #' @param bw_adjust Kernel bandwidth adjustment factor used during regurlarization; factor will be applied to output of bw.SJ; default is 3
 #' @param gmean_eps Small value added when calculating geometric mean of a gene to avoid log(0); default is 1
 #' @param theta_estimation_fun Character string indicating which method to use to estimate theta (when method = poisson); default is 'theta.ml', but 'theta.mm' seems to be a good and fast alternative
-#' @param theta_given If method is set to nb_theta_given, this should be a named numeric vector of fixed theta values for the genes; if method is offset, this should be a single value; default is NULL
+#' @param theta_given If method is set to nb_theta_given, this should be a named numeric vector of fixed theta values for the genes (length is number of genes, and names are the gene names); if method is offset, this should be a single value; default is NULL;  
+#' @param nb_mle_theta Specify manualy (e.g. using fitted theta values obtained when theta is not fixed) if theta_given is set. Because fixed theta cannot represent the theta_mle that is used in the condition (theta_mm/theta_mle < 1e-3) to determine whether a gene is poisson to exclude. default is NULL
 #' @param exclude_poisson Exclude poisson genes (i.e. mu < 0.001 or mu > variance) from regularization; default is FALSE
 #' @param use_geometric_mean Use geometric mean instead of arithmetic mean for all calculations ; default is TRUE
 #' @param use_geometric_mean_offset Use geometric mean instead of arithmetic mean in the offset model; default is FALSE
@@ -130,6 +131,7 @@ vst <- function(umi,
                 gmean_eps = 1,
                 theta_estimation_fun = 'theta.ml',
                 theta_given = NULL,
+                nb_mle_theta = NULL,
                 exclude_poisson = FALSE,
                 use_geometric_mean = TRUE,
                 use_geometric_mean_offset = FALSE,
@@ -486,7 +488,7 @@ vst <- function(umi,
 get_model_pars <- function(genes_step1, bin_size, umi, model_str, cells_step1,
                            method, data_step1, theta_given, theta_estimation_fun,
                            exclude_poisson = FALSE, fix_intercept = FALSE,
-                           fix_slope = FALSE, use_geometric_mean = TRUE,
+                           fix_slope = FALSE, use_geometric_mean = TRUE,nb_mle_theta,
                            use_geometric_mean_offset = FALSE, verbosity = 0) {
   if (fix_slope | fix_intercept) {
     gene_mean <- rowMeans(umi)
@@ -688,7 +690,12 @@ get_model_pars <- function(genes_step1, bin_size, umi, model_str, cells_step1,
     genes_var_step1 <- genes_var[genes_step1]
 
     predicted_theta <- genes_amean_step1^2/(genes_var_step1-genes_amean_step1)
-    actual_theta <- model_pars[genes_step1, "theta"]
+
+    if is.null(theta_given){
+      actual_theta <- model_pars[genes_step1, "theta"]
+    }else{
+      actual_theta <- nb_mle_theta[genes_step1, "theta"]
+    }
     diff_theta <- predicted_theta/actual_theta
     model_pars <- cbind(model_pars, diff_theta)
 
