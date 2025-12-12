@@ -20,9 +20,12 @@ fit_glmGamPoi_offset_fixed_theta <- function(
 ```
 example: 
 ```
+n_gene <- nrow(seuratobj)
+gene_names <- rownames(seuratobj)
+
 SCTransform(
-  object,
+  seuratobj,
   vst.flavor = "v2",
-  theta_given = 100
+  theta_given = setNames(rep(100,n_gene),nm=gene_names)
 )
 ```
