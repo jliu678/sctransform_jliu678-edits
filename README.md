@@ -8,3 +8,19 @@ R package for normalization and variance stabilization of single-cell RNA-seq da
 Core functionality of this package has been integrated into [Seurat](https://satijalab.org/seurat/)'
 
 ## Quick start
+I add a new function as below to allow the theta_given can be effetive together with vst.flavor=2 to use the stabler glmgampoi (implemented in sctransform v2) to run the analytic pearson residual. Check my blog to learn the logic flow of the original `sctransform()`
+```
+fit_glmGamPoi_offset_fixed_theta <- function(
+    umi,
+    model_str,
+    data,
+    theta_given = NULL,
+    allow_inf_theta = FALSE
+)
+```
+example: 
+SCTransform(
+  object,
+  vst.flavor = "v2",
+  theta_given = 100
+)
