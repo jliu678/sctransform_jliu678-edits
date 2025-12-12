@@ -19,8 +19,10 @@ fit_glmGamPoi_offset_fixed_theta <- function(
 )
 ```
 example: 
+```
 SCTransform(
   object,
   vst.flavor = "v2",
   theta_given = 100
 )
+```
