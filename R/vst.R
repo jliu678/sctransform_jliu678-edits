@@ -691,7 +691,7 @@ get_model_pars <- function(genes_step1, bin_size, umi, model_str, cells_step1,
 
     predicted_theta <- genes_amean_step1^2/(genes_var_step1-genes_amean_step1)
 
-    if is.null(theta_given){
+    if (is.null(theta_given)){
       actual_theta <- model_pars[genes_step1, "theta"]
     }else{
       actual_theta <- nb_mle_theta[genes_step1, "theta"]
