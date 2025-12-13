@@ -307,7 +307,7 @@ vst <- function(umi,
 
   times$get_model_pars = Sys.time()
   model_pars <- get_model_pars(genes_step1, bin_size, umi, model_str, cells_step1,
-                               method, data_step1, theta_given, theta_estimation_fun,
+                               method, data_step1, theta_given, nb_mle_theta, theta_estimation_fun,
                                exclude_poisson, fix_intercept, fix_slope,
                                use_geometric_mean, use_geometric_mean_offset, verbosity)
 
@@ -486,9 +486,9 @@ vst <- function(umi,
 
 
 get_model_pars <- function(genes_step1, bin_size, umi, model_str, cells_step1,
-                           method, data_step1, theta_given, theta_estimation_fun,
+                           method, data_step1, theta_given, nb_mle_theta, theta_estimation_fun,
                            exclude_poisson = FALSE, fix_intercept = FALSE,
-                           fix_slope = FALSE, use_geometric_mean = TRUE,nb_mle_theta,
+                           fix_slope = FALSE, use_geometric_mean = TRUE,
                            use_geometric_mean_offset = FALSE, verbosity = 0) {
   if (fix_slope | fix_intercept) {
     gene_mean <- rowMeans(umi)
