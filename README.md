@@ -8,7 +8,7 @@ R package for normalization and variance stabilization of single-cell RNA-seq da
 Core functionality of this package has been integrated into [Seurat](https://satijalab.org/seurat/)'
 
 ## Quick start
-I add a new function as below to allow the theta_given can be effetive together with `vst.flavor = "v2"` to use the stabler glmgampoi (implemented in sctransform v2) to run the analytic pearson residual. Check my blog to learn the logic flow of the original `sctransform()`
+I add new functions including below to allow the theta_given to be effetive together with `vst.flavor = "v2"`, thus to use the stabler glmgampoi (implemented in sctransform v2) to run the analytic pearson residual. Check [my blog](https://jiyuanliu.netlify.app/project/improved_scrnaseq_normalization/) to learn the logic flow of the original `sctransform()` and the improved UMI normalization model. 
 
 I also added another parameter `nb_mle_theta` which need be specified manualy (e.g. using fitted theta values obtained when theta is not fixed) when above theta_given is set. Because fixed theta cannot represent the theta_mle that is used in the condition (theta_mm/theta_mle < 1e-3) to determine whether a gene is poisson to exclude. Its default value is NULL
 
